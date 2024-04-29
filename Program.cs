@@ -13,7 +13,6 @@ var host = new HostBuilder()
         var region = Get("Region");
         services.AddSingleton(
             new TranslationClient(apiKey, region));
-
     })
     .Build();
 

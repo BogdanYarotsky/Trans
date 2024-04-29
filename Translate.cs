@@ -1,12 +1,25 @@
-using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
-using System.Transactions;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Trans
 {
+    public class MultiResponse
+    {
+        [CosmosDBOutput("ToDoList", "Items",
+            Connection = "CosmosDbConnectionSetting")]
+        public MyDocument Document { get; set; }
+        public HttpResponseData HttpResponse { get; set; }
+    }
+
+    public class MyDocument
+    {
+        public string partitionKey { get; set; }
+        public string id { get; set; }
+    }
+
     public class Translate
     {
         private readonly ILogger<Translate> _logger;
@@ -19,7 +32,8 @@ namespace Trans
         }
 
         [Function("Translate")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+        public async Task<MultiResponse> RunAsync(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
             var resp = req.CreateResponse(HttpStatusCode.OK);
@@ -35,7 +49,15 @@ namespace Trans
                 await resp.WriteStringAsync(e.ToString());
             }
 
-            return resp;
+            return new MultiResponse
+            {
+                HttpResponse = resp,
+                Document = new MyDocument
+                {
+                    partitionKey = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                    id = "Gnida",
+                }
+            };
         }
     }
 }
