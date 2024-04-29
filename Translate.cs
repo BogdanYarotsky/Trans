@@ -18,6 +18,7 @@ namespace Trans
     {
         public string partitionKey { get; set; }
         public string id { get; set; }
+        public string lobzik { get; set; }
     }
 
     public class Translate
@@ -33,22 +34,23 @@ namespace Trans
 
         [Function("Translate")]
         public async Task<MultiResponse> RunAsync(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+            [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
         {
-            _logger.LogInformation("C# HTTP trigger function processed a request.");
             var resp = req.CreateResponse(HttpStatusCode.OK);
             resp.Headers.Add("Content-Type", "text/plain; charset=utf-8");
 
-            try
-            {
-                var translation = await _client.GermanToEnglishAsync("Apfel", default);
-                await resp.WriteStringAsync($"Welcome to {translation} Functions!");
-            }
-            catch (Exception e)
-            {
-                await resp.WriteStringAsync(e.ToString());
-            }
+            //try
+            //{
+            //    var translation = await _client.GermanToEnglishAsync("Apfel", default);
+            //    await resp.WriteStringAsync($"Welcome to {translation} Functions!");
+            //}
+            //catch (Exception e)
+            //{
+            //    await resp.WriteStringAsync(e.ToString());
+            //}
 
+            using var reader = new StreamReader(req.Body);
+            var body = await reader.ReadToEndAsync();
             return new MultiResponse
             {
                 HttpResponse = resp,
@@ -56,6 +58,7 @@ namespace Trans
                 {
                     partitionKey = DateTime.Now.ToString(CultureInfo.InvariantCulture),
                     id = "Gnida",
+                    lobzik = body
                 }
             };
         }
