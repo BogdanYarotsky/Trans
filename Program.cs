@@ -6,9 +6,14 @@ var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
     .ConfigureServices((ctx, services) =>
     {
-        var apiKey = ctx.Configuration["ApiKey"];
-        var region = ctx.Configuration["Region"];
-        services.AddSingleton(new AzureTranslationClient(apiKey, region));
+        string Get(string key) 
+            => ctx.Configuration[key];
+
+        var apiKey = Get("ApiKey");
+        var region = Get("Region");
+        services.AddSingleton(
+            new TranslationClient(apiKey, region));
+
     })
     .Build();
 

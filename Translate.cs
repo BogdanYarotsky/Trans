@@ -9,9 +9,9 @@ namespace Trans
     public class Translate
     {
         private readonly ILogger<Translate> _logger;
-        private readonly AzureTranslationClient _client;
+        private readonly TranslationClient _client;
 
-        public Translate(ILogger<Translate> logger, AzureTranslationClient client)
+        public Translate(ILogger<Translate> logger, TranslationClient client)
         {
             _logger = logger;
             _client = client;

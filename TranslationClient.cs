@@ -6,9 +6,9 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 
-public class AzureTranslationClient : HttpClient
+public class TranslationClient : HttpClient
 {
-    public AzureTranslationClient(string apiKey, string region)
+    public TranslationClient(string apiKey, string region)
     {
         DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
         DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Region", region);
