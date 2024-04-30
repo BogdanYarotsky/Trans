@@ -1,10 +1,11 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Telegram.Bot;
 
 namespace Trans
 {
@@ -23,15 +24,20 @@ namespace Trans
         public string lobzik { get; set; }
     }
 
-    public class Translate
+    public class TranslateFunc
     {
-        private readonly ILogger<Translate> _logger;
-        private readonly TranslationClient _client;
+        private readonly ILogger<TranslateFunc> _logger;
+        private readonly TranslationClient _translator;
+        private readonly TelegramBotClient _telegramBot;
 
-        public Translate(ILogger<Translate> logger, TranslationClient client)
+        public TranslateFunc(
+            ILogger<TranslateFunc> logger, 
+            TranslationClient translator,
+            TelegramBotClient telegramBot)
         {
             _logger = logger;
-            _client = client;
+            _translator = translator;
+            _telegramBot = telegramBot;
         }
 
         [Function("Translate")]
@@ -44,6 +50,13 @@ namespace Trans
             using var reader = new StreamReader(req.Body);
             var body = await reader.ReadToEndAsync();
             var update = JsonSerializer.Deserialize<TelegramUpdate>(body);
+
+
+            var message = update?.Message.Text ?? string.Empty;
+            var chatId = update?.Message.Chat.Id ?? throw new Exception("");
+
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            await _telegramBot.SendTextMessageAsync(chatId, $"{message}??? Пішов нахуй!");
 
             return new MultiResponse
             {
