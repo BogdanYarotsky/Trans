@@ -14,10 +14,10 @@ var host = new HostBuilder()
         var region = Get("Region");
         var botKey = Get("Telegram");
 
-        services.AddSingleton(() =>
+        services.AddSingleton(_ =>
             new TranslationClient(apiKey, region));
 
-        services.AddSingleton(() => 
+        services.AddSingleton(_ => 
             new TelegramBotClient(botKey));
     })
     .Build();
