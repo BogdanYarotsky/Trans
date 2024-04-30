@@ -48,6 +48,7 @@ namespace Trans
             var d = new MyDocument
             {
                 partitionKey = Guid.NewGuid().ToString(),
+                id = "Gnida"
             };
 
             try
