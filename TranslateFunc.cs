@@ -6,6 +6,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace Trans
 {
@@ -44,28 +45,31 @@ namespace Trans
         public async Task<MultiResponse> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
         {
-            var resp = req.CreateResponse(HttpStatusCode.OK);
-            resp.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+            var d = new MyDocument
+            {
+                partitionKey = Guid.NewGuid().ToString(),
+            };
 
-            using var reader = new StreamReader(req.Body);
-            var body = await reader.ReadToEndAsync();
-            var update = JsonSerializer.Deserialize<TelegramUpdate>(body);
-
-
-            var message = update?.Message.Text ?? string.Empty;
-            var chatId = update?.Message.Chat.Id ?? throw new Exception("");
-
-            await Task.Delay(TimeSpan.FromSeconds(1));
-            await _telegramBot.SendTextMessageAsync(chatId, $"{message}??? Пішов нахуй!");
+            try
+            {
+                using var reader = new StreamReader(req.Body);
+                var body = await reader.ReadToEndAsync();
+                var update = JsonSerializer.Deserialize<TelegramUpdate>(body);
+                var message = update?.Message.Text ?? string.Empty;
+                var chatId = update?.Message.Chat.Id ?? throw new Exception("");
+                await Task.Delay(TimeSpan.FromSeconds(1));
+                await _telegramBot.SendTextMessageAsync(chatId, $"{message}??? Пішов нахуй!");
+                d.lobzik = message;
+            }
+            catch (Exception e)
+            {
+                d.lobzik = e.ToString();
+            }
 
             return new MultiResponse
             {
-                HttpResponse = resp,
-                Document = new MyDocument
-                {
-                    partitionKey = Guid.NewGuid().ToString(),
-                    lobzik = update?.Message.Text ?? string.Empty,
-                }
+                HttpResponse = req.CreateResponse(HttpStatusCode.OK),
+                Document = d
             };
         }
     }
