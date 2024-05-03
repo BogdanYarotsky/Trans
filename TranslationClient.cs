@@ -14,7 +14,7 @@ public class TranslationClient : HttpClient
         DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Region", region);
     }
 
-    public async Task<string?> GermanToEnglishAsync(string text, CancellationToken ct)
+    public async Task<string?> EnglishToGermanAsync(string text, CancellationToken ct)
     {
         object[] body = { new { Text = text } };
         var requestBody = JsonSerializer.Serialize(body);
@@ -22,7 +22,7 @@ public class TranslationClient : HttpClient
         request.Method = HttpMethod.Post;
 
         request.RequestUri =
-            new Uri("https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=de&to=en");
+            new Uri("https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to=de");
         request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
         var response = await SendAsync(request, ct);

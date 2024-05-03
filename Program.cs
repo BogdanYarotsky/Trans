@@ -19,6 +19,8 @@ var host = new HostBuilder()
 
         services.AddSingleton(_ => 
             new TelegramBotClient(botKey));
+
+        services.AddSingleton(_ => new HttpClient());
     })
     .Build();
 

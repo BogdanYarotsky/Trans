@@ -30,48 +30,69 @@ namespace Trans
         private readonly ILogger<TranslateFunc> _logger;
         private readonly TranslationClient _translator;
         private readonly TelegramBotClient _telegramBot;
+        private readonly HttpClient _httpClient;
 
         public TranslateFunc(
             ILogger<TranslateFunc> logger, 
             TranslationClient translator,
-            TelegramBotClient telegramBot)
+            TelegramBotClient telegramBot,
+            HttpClient httpClient)
         {
             _logger = logger;
             _translator = translator;
             _telegramBot = telegramBot;
+            _httpClient = httpClient;
         }
 
         [Function("Translate")]
-        public async Task<MultiResponse> RunAsync(
+        public async Task<HttpResponseData> RunAsync(
             [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
         {
-            var d = new MyDocument
-            {
-                partitionKey = Guid.NewGuid().ToString(),
-                id = "Gnida"
-            };
-
+            var update = await JsonSerializer.DeserializeAsync<TelegramUpdate>(req.Body);
+            var chatId = update?.Message.Chat.Id ?? throw new Exception("");
             try
             {
-                using var reader = new StreamReader(req.Body);
-                var body = await reader.ReadToEndAsync();
-                var update = JsonSerializer.Deserialize<TelegramUpdate>(body);
-                var message = update?.Message.Text ?? string.Empty;
-                var chatId = update?.Message.Chat.Id ?? throw new Exception("");
-                await Task.Delay(TimeSpan.FromSeconds(1));
-                await _telegramBot.SendTextMessageAsync(chatId, $"{message}??? Пішов нахуй!");
-                d.lobzik = message;
+                using var resp = await _httpClient.GetAsync("https://germanlearnapi.azurewebsites.net/random-word");
+                var content = await resp.Content.ReadAsStringAsync();
+                var json = JsonSerializer.Deserialize<MyData>(content) ?? throw new Exception("could no deserizl. resp");
+                var word = json.word;
+                var translated = await _translator.EnglishToGermanAsync(word, default);
+                await _telegramBot.SendTextMessageAsync(chatId, $"{translated} - {word}");
             }
             catch (Exception e)
             {
-                d.lobzik = e.ToString();
+                await _telegramBot.SendTextMessageAsync(chatId, e.ToString());
             }
 
-            return new MultiResponse
-            {
-                HttpResponse = req.CreateResponse(HttpStatusCode.OK),
-                Document = d
-            };
+
+            return req.CreateResponse(HttpStatusCode.OK);
+
+            //var d = new MyDocument
+            //{
+            //    partitionKey = Guid.NewGuid().ToString(),
+            //    id = "Gnida"
+            //};
+
+            //try
+            //{
+            //    using var reader = new StreamReader(req.Body);
+            //    var body = await reader.ReadToEndAsync();
+            //    var update = JsonSerializer.Deserialize<TelegramUpdate>(body);
+            //    var message = update?.Message.Text ?? string.Empty;
+            //    var chatId = update?.Message.Chat.Id ?? throw new Exception("");
+            //    await _telegramBot.SendTextMessageAsync(chatId, $"{message}??? Пішов нахуй!");
+            //    d.lobzik = message;
+            //}
+            //catch (Exception e)
+            //{
+            //    d.lobzik = e.ToString();
+            //}
+
+            //return new MultiResponse
+            //{
+            //    HttpResponse = req.CreateResponse(HttpStatusCode.OK),
+            //    Document = d
+            //};
         }
     }
 
@@ -139,6 +160,11 @@ namespace Trans
 
         [JsonPropertyName("message")]
         public Message Message { get; set; }
+    }
+
+    public class MyData
+    {
+        public string word { get; set; }
     }
 
 
